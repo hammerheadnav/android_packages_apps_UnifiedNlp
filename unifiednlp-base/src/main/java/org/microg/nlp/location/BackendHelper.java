@@ -38,7 +38,7 @@ import static org.microg.nlp.api.Constants.LOCATION_EXTRA_BACKEND_COMPONENT;
 import static org.microg.nlp.api.Constants.LOCATION_EXTRA_BACKEND_PROVIDER;
 
 class BackendHelper extends AbstractBackendHelper {
-    private static final String TAG = "NlpLocBackendHelper";
+    private static final String TAG = "KarooNlp";
     private final BackendFuser backendFuser;
     private final Callback callback = new Callback();
     private LocationBackend backend;
@@ -98,9 +98,7 @@ class BackendHelper extends AbstractBackendHelper {
         if (location.getTime() <= 0) {
             location.setTime(System.currentTimeMillis());
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            updateElapsedRealtimeNanos(location);
-        }
+        updateElapsedRealtimeNanos(location);
         Location noGpsLocation = new Location(location);
         noGpsLocation.setExtras(null);
         location.getExtras().putParcelable(LocationProviderBase.EXTRA_NO_GPS_LOCATION, noGpsLocation);

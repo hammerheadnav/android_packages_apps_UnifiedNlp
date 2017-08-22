@@ -22,6 +22,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.util.Log;
 
+import org.microg.nlp.BackendInfo;
 import org.microg.nlp.Preferences;
 
 import java.util.ArrayList;
@@ -33,8 +34,7 @@ import static org.microg.nlp.api.Constants.ACTION_LOCATION_BACKEND;
 import static org.microg.nlp.api.Constants.LOCATION_EXTRA_OTHER_BACKENDS;
 
 class BackendFuser {
-    private static final String TAG = "NlpLocationBackendFuser";
-
+    private static final String TAG = "KarooNlp";
     private final List<BackendHelper> backendHelpers = new ArrayList<BackendHelper>();
     private final LocationProvider locationProvider;
     private final Context context;
@@ -51,15 +51,11 @@ class BackendFuser {
         unbind();
         backendHelpers.clear();
         lastLocationReportTime = 0;
-        for (String backend : Preferences
-                .splitBackendString(new Preferences(context).getLocationBackends())) {
-            String[] parts = backend.split("/");
-            if (parts.length >= 2) {
-                Intent intent = new Intent(ACTION_LOCATION_BACKEND);
-                intent.setPackage(parts[0]);
-                intent.setClassName(parts[0], parts[1]);
-                backendHelpers.add(new BackendHelper(context, this, intent, parts.length >= 3 ? parts[2] : null));
-            }
+        for (BackendInfo backendInfo : new Preferences(context).getInstalledBackends()) {
+            Intent intent = new Intent(ACTION_LOCATION_BACKEND);
+            intent.setPackage(backendInfo.serviceInfo.packageName);
+            intent.setClassName(backendInfo.serviceInfo.packageName, backendInfo.serviceInfo.name);
+            backendHelpers.add(new BackendHelper(context, this, intent, backendInfo.signatureDigest));
         }
     }
 

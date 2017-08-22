@@ -17,51 +17,41 @@
 package org.microg.nlp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.microg.nlp.api.Constants.ACTION_LOCATION_BACKEND;
 
 public class Preferences {
-    private static final String DEFAULT_LOCATION_BACKENDS = "default_location_backends";
-    private static final String DEFAULT_GEOCODER_BACKENDS = "default_geocoder_backends";
     private final Context context;
 
     public Preferences(Context context) {
         this.context = context;
     }
 
-    private SharedPreferences getSharedPreferences() {
-        return PreferenceManager.getDefaultSharedPreferences(context);
-    }
-
-    public String getDefaultLocationBackends() {
-        String defBackends = Settings.Secure.getString(context.getContentResolver(), DEFAULT_LOCATION_BACKENDS);
-        return defBackends == null ? "" : defBackends;
-    }
-
-    public String getLocationBackends() {
-        return getSharedPreferences().getString(context.getString(R.string.pref_location_backends),
-                getDefaultLocationBackends());
-    }
-
-    public String getDefaultGeocoderBackends() {
-        String defBackends = Settings.Secure.getString(context.getContentResolver(), DEFAULT_GEOCODER_BACKENDS);
-        return defBackends == null ? "" : defBackends;
-    }
-
-    public String getGeocoderBackends() {
-        return getSharedPreferences().getString(context.getString(R.string.pref_geocoder_backends),
-                getDefaultGeocoderBackends());
-    }
-
-    public static String[] splitBackendString(String backendString) {
-        return backendString.split("\\|");
+    public List<BackendInfo> getInstalledBackends() {
+        List<BackendInfo> knownBackends = new ArrayList<BackendInfo>();
+        List<ResolveInfo> resolveInfos = context.getPackageManager()
+                .queryIntentServices(new Intent(ACTION_LOCATION_BACKEND), PackageManager.GET_META_DATA);
+        for (ResolveInfo info : resolveInfos) {
+            ServiceInfo serviceInfo = info.serviceInfo;
+            String simpleName = String.valueOf(serviceInfo.loadLabel(context.getPackageManager()));
+            String signatureDigest = Preferences.firstSignatureDigest(context, serviceInfo.packageName);
+            knownBackends.add(new BackendInfo(serviceInfo, simpleName, signatureDigest));
+        }
+        return knownBackends;
     }
 
     public static String firstSignatureDigest(Context context, String packageName) {

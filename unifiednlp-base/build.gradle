@@ -13,40 +13,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-apply plugin: 'com.android.library'
-
-String getMyVersionName() {
-    def stdout = new ByteArrayOutputStream()
-    if (rootProject.file("gradlew").exists())
-        exec { commandLine 'git', 'describe', '--tags', '--always', '--dirty'; standardOutput = stdout }
-    else // automatic build system, don't tag dirty
-        exec { commandLine 'git', 'describe', '--tags', '--always'; standardOutput = stdout }
-    return stdout.toString().trim().substring(1)
-}
+apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion androidCompileSdk()
     buildToolsVersion "$androidBuildVersionTools"
 
     defaultConfig {
-        versionName getMyVersionName()
+        applicationId = 'com.google.android.gms'
+        versionName "1.0"
+        versionCode(5000)
         minSdkVersion androidMinSdk()
         targetSdkVersion androidTargetSdk()
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("config/keystore")
+            storePassword "$System.env.KEYSTORE_PASSWORD"
+            keyAlias "hxrelease"
+            keyPassword "$System.env.KEY_PASSWORD"
+        }
+        debug {
+            storeFile file("config/hx_debug.keystore")
+            storePassword "xd4i8b9veU"
+            keyAlias "hxdebug"
+            keyPassword "hkr9F9TuJR2"
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    lintOptions {
+        disable 'MissingTranslation', 'InvalidPackage', 'BatteryLife', 'ImpliedQuantity', 'MissingQuantity'
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_6
     }
-
-    lintOptions {
-        // TODO: Remove MissingTranslation once we have stable strings and proper translations.
-        disable 'MissingTranslation'
-    }
 }
 
 dependencies {
-    compile project(":microg-ui-tools")
     compile project(':unifiednlp-api')
     provided project(':unifiednlp-compat')
+    compile 'com.squareup.wire:wire-runtime:1.5.0'
+    compile 'org.osmdroid:osmdroid-android:5.1'
 }
